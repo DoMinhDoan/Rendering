@@ -20,19 +20,35 @@ Shader "Custom/MyShader"
 
 			#include "UnityCG.cginc"
 			float4 _Tint;
-
-			float4 MyVertexProgram(
-				float4 position : POSITION
-			) : SV_POSITION
+			
+			struct Interpolators
 			{
-				return UnityObjectToClipPos(position);
+				float4 position : SV_POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+			struct VertexData
+			{
+				float4 position : POSITION;
+				float2 uv : TEXCOORD0;
+			};
+
+			Interpolators MyVertexProgram(
+				VertexData vertexData
+			)
+			{
+				Interpolators interpolator;
+				//interpolator.localPosition = position.xyz;
+				interpolator.uv = vertexData.uv;
+				interpolator.position = UnityObjectToClipPos(vertexData.position);
+				return interpolator;
 			}
 
 			float4 MyFragmentProgram(
-				float4 position : SV_POSITION
+				Interpolators interpolator
 			) : SV_TARGET
 			{
-				return _Tint;
+				return float4(interpolator.uv, 1, 1);
 			}
 
 			ENDCG
