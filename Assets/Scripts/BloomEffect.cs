@@ -6,10 +6,19 @@ public class BloomEffect : MonoBehaviour {
 
     [Range(1, 16)]
     public int iterations = 1;
+    public Shader bloomShader;
 
     RenderTexture[] renderTextures = new RenderTexture[16];
+    Material bloom;
 
 	void OnRenderImage (RenderTexture source, RenderTexture destination) {
+
+        if(bloom ==  null)
+        {
+            bloom = new Material(bloomShader);
+            bloom.hideFlags = HideFlags.HideAndDontSave;
+        }
+
         int width = source.width ;
         int height = source.height;
         RenderTextureFormat format = source.format;
@@ -31,7 +40,7 @@ public class BloomEffect : MonoBehaviour {
             }
 
             destinationRT = renderTextures[i] = RenderTexture.GetTemporary(width, height, 0, format);
-            Graphics.Blit(currentRT, destinationRT);
+            Graphics.Blit(currentRT, destinationRT, bloom);
             //RenderTexture.ReleaseTemporary(currentRT);
             currentRT = destinationRT;
         }
@@ -40,12 +49,12 @@ public class BloomEffect : MonoBehaviour {
         {
             destinationRT = renderTextures[i];
             renderTextures[i] = null;
-            Graphics.Blit(currentRT, destinationRT);
+            Graphics.Blit(currentRT, destinationRT, bloom);
             RenderTexture.ReleaseTemporary(currentRT);
             currentRT = destinationRT;
         }
 
-        Graphics.Blit(destinationRT, destination);
+        Graphics.Blit(destinationRT, destination, bloom);
 
         RenderTexture.ReleaseTemporary(destinationRT);
     }
