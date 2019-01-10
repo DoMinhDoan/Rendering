@@ -6,12 +6,20 @@ public class BloomEffect : MonoBehaviour {
 
     [Range(1, 16)]
     public int iterations = 1;
+    [Range(0, 10)]
+    public float threshold = 1;
+
     public Shader bloomShader;
 
     RenderTexture[] renderTextures = new RenderTexture[16];
     Material bloom;
 
-	void OnRenderImage (RenderTexture source, RenderTexture destination) {
+    const int BloomPrefilterPass = 0;
+    const int BloomDownPass = 1;
+    const int BloomUpPass = 2;
+    const int ApplyBloomPass = 3;
+
+    void OnRenderImage (RenderTexture source, RenderTexture destination) {
 
         if(bloom ==  null)
         {
@@ -24,7 +32,9 @@ public class BloomEffect : MonoBehaviour {
         RenderTextureFormat format = source.format;
 
         RenderTexture destinationRT = renderTextures[0] = RenderTexture.GetTemporary(width, height, 0, format);
-		Graphics.Blit(source, destinationRT);
+
+        bloom.SetFloat("_Threshold", threshold);
+        Graphics.Blit(source, destinationRT, bloom, BloomPrefilterPass);
 
         RenderTexture currentRT = destinationRT;
 
@@ -40,7 +50,7 @@ public class BloomEffect : MonoBehaviour {
             }
 
             destinationRT = renderTextures[i] = RenderTexture.GetTemporary(width, height, 0, format);
-            Graphics.Blit(currentRT, destinationRT, bloom);
+            Graphics.Blit(currentRT, destinationRT, bloom, BloomDownPass);
             //RenderTexture.ReleaseTemporary(currentRT);
             currentRT = destinationRT;
         }
@@ -49,13 +59,14 @@ public class BloomEffect : MonoBehaviour {
         {
             destinationRT = renderTextures[i];
             renderTextures[i] = null;
-            Graphics.Blit(currentRT, destinationRT, bloom);
+            Graphics.Blit(currentRT, destinationRT, bloom, BloomUpPass);
             RenderTexture.ReleaseTemporary(currentRT);
             currentRT = destinationRT;
         }
 
-        Graphics.Blit(destinationRT, destination, bloom);
-
+        //Graphics.Blit(destinationRT, destination, bloom, BloomUpPass);
+        bloom.SetTexture("_SourceTex", source);
+        Graphics.Blit(destinationRT, destination, bloom, ApplyBloomPass);
         RenderTexture.ReleaseTemporary(destinationRT);
     }
 }
