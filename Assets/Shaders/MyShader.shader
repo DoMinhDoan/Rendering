@@ -7,6 +7,7 @@ Shader "Custom/MyShader"
 	Properties
 	{
 		_Tint("Tint", Color) = (1, 1, 0, 1)
+		_MainTex("Texture", 2D) = "white" {}
 	}
 
 	SubShader
@@ -20,6 +21,8 @@ Shader "Custom/MyShader"
 
 			#include "UnityCG.cginc"
 			float4 _Tint;
+			sampler2D _MainTex;
+			float4 _MainTex_ST;
 			
 			struct Interpolators
 			{
@@ -39,7 +42,8 @@ Shader "Custom/MyShader"
 			{
 				Interpolators interpolator;
 				//interpolator.localPosition = position.xyz;
-				interpolator.uv = vertexData.uv;
+				//interpolator.uv = vertexData.uv * _MainTex_ST.xy + _MainTex_ST.zw;
+				interpolator.uv = TRANSFORM_TEX(vertexData.uv, _MainTex);
 				interpolator.position = UnityObjectToClipPos(vertexData.position);
 				return interpolator;
 			}
@@ -48,7 +52,8 @@ Shader "Custom/MyShader"
 				Interpolators interpolator
 			) : SV_TARGET
 			{
-				return float4(interpolator.uv, 1, 1);
+				//return float4(interpolator.uv, 1, 1);
+				return tex2D(_MainTex, interpolator.uv) * _Tint;
 			}
 
 			ENDCG
